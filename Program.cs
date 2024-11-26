@@ -1,9 +1,31 @@
 using DeliveryServiceWorker;
+using NLog;
+using NLog.Web;
 
-IHost host = Host.CreateDefaultBuilder(args)
-.ConfigureServices(services =>
+var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings()
+.GetCurrentClassLogger();
+logger.Debug("init main");
+
+try
 {
-    services.AddHostedService<Worker>();
-})
-.Build();
-host.Run();
+
+    IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<Worker>();
+    })
+    .UseNLog()
+
+    .Build();
+
+    host.Run();
+}
+catch (Exception ex)
+{
+    logger.Error(ex, "Stopped program because of exception");
+    throw;
+}
+finally
+{
+    NLog.LogManager.Shutdown();
+}
